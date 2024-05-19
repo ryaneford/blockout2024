@@ -5,21 +5,24 @@ from drivers.instagram import InstagramClient
 
 
 def mute_instagrapi_logger() -> None:
+    # Configuring logging to show only errors
     logging.basicConfig(level=logging.ERROR)
 
 
 def get_social_media_client() -> BaseClient:
     available_options = ['1', '2']
-    selection = input(f'Select a social media (enter number):\n1) Instagram\n2) TikTok\n\n> ')
-    if selection not in available_options:
-        print(f"Invalid option. Available options are: {', '.join([x for x in available_options])}")
-        get_social_media_client()
+    while True:
+        selection = input(
+            'Select a social media (enter number):\n1) Instagram\n2) TikTok\n\n> ')
+        if selection in available_options:
+            break
+        print(f"Invalid option. Available options are: {', '.join(available_options)}")
 
     if selection == '1':
         return InstagramClient()
     else:
         print('TikTok is still in progress.')
-        return get_social_media_client()
+        return None
 
 
 def main():
