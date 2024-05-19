@@ -1,6 +1,6 @@
-import os.path
+import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from instagrapi import Client
 from instagrapi.exceptions import UserNotFound, ChallengeRequired, TwoFactorRequired, LoginRequired
@@ -14,22 +14,20 @@ class InstagramClient(BaseClient):
         super().__init__()
         self.usernames_filename = f'{PROJECT_ROOT_PATH}/resources/usernames/instagram.txt'
         self.cache_dir = f'{PROJECT_ROOT_PATH}/resources/cache/instagram'
-        self.blocked_users_filename = '{}/{}-blocked_users.txt'.format(self.cache_dir, '{username}')
-        self.session_path_by_username = '{}/{}-session.json'.format(self.cache_dir, '{username}')
+        self.blocked_users_filename = f'{self.cache_dir}/{{username}}-blocked_users.txt'
+        self.session_path_by_username = f'{self.cache_dir}/{{username}}-session.json'
         self.username: Optional[str] = None
         self.client = self.start_client()
 
-    @staticmethod
-    def get_usernames_from_file(file_path: str) -> list[str]:
+    def get_usernames_from_file(self, file_path: str) -> List[str]:
         try:
             with open(file_path, "r") as file:
                 print(f'Reading usernames from file: {file_path}')
                 return file.read().splitlines()
         except FileNotFoundError:
-            raise Exception(f"Error: {file_path} file not found.")
+            raise FileNotFoundError(f"Error: {file_path} file not found.")
 
-    @staticmethod
-    def _append_to_cache(filename: str, content: str) -> None:
+    def _append_to_cache(self, filename: str, content: str) -> None:
         with open(filename, 'a') as file:
             file.write(f'{content}\n')
 
@@ -60,20 +58,19 @@ class InstagramClient(BaseClient):
 
         try:
             self.log_in(client=client, username=self.username, password=password)
-
         except TwoFactorRequired:
             print('Two-factor authentication required.')
             two_factor_code = input('Enter the 2FA code: ')
             try:
                 self.log_in(client=client, username=self.username, password=password, verification_code=two_factor_code)
-            except Exception as e2:
-                raise Exception(f'Two-factor login error: {e2}')
+            except Exception as e:
+                raise Exception(f'Two-factor login error: {e}')
         except ChallengeRequired:
             print('Challenge required. Please approve the login on your Instagram app or enter the code sent to your email/phone.')
             try:
                 client.challenge_resolve(client.last_json)
-            except Exception as e2:
-                raise Exception(f'Challenge error: {e2}')
+            except Exception as e:
+                raise Exception(f'Challenge error: {e}')
         except Exception as e:
             raise Exception(f'Error initializing Instagram client: {e}')
 
